@@ -1,0 +1,420 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ExternalLink, Mail, Star, Briefcase, Code2, Quote, Sparkles, ArrowUpRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import ContactForm from '../ContactForm';
+
+interface CreativeTemplateProps {
+  profile: any;
+  username: string;
+}
+
+const colorThemes: Record<string, { primary: string; gradient: string; accent: string }> = {
+  blue: { primary: '#3b82f6', gradient: 'from-blue-500 to-indigo-600', accent: 'bg-blue-500' },
+  emerald: { primary: '#10b981', gradient: 'from-emerald-500 to-teal-600', accent: 'bg-emerald-500' },
+  purple: { primary: '#a855f7', gradient: 'from-purple-500 to-pink-600', accent: 'bg-purple-500' },
+  rose: { primary: '#f43f5e', gradient: 'from-rose-500 to-orange-500', accent: 'bg-rose-500' },
+  amber: { primary: '#f59e0b', gradient: 'from-amber-500 to-yellow-500', accent: 'bg-amber-500' },
+};
+
+export default function CreativeTemplate({ profile, username }: CreativeTemplateProps) {
+  const theme = colorThemes[profile.theme_color] || colorThemes.blue;
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
+  const openProjectGallery = (images: string[], startIndex = 0) => {
+    if (images.length === 0) return;
+    setGalleryImages(images);
+    setCurrentImageIndex(startIndex);
+  };
+
+  const closeProjectGallery = () => {
+    setGalleryImages([]);
+    setCurrentImageIndex(0);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* Hero */}
+      <header className="relative min-h-[70vh] flex items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="text-center max-w-4xl"
+        >
+          {profile.avatar_url && (
+            <motion.img
+              src={profile.avatar_url}
+              alt={profile.full_name}
+              className="w-32 h-32 rounded-full object-cover mx-auto mb-8 border-4 border-white/10"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            />
+          )}
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-2 mb-4"
+          >
+            <Sparkles className="w-5 h-5" style={{ color: theme.primary }} />
+            <span className="text-sm font-medium text-white/60 uppercase tracking-widest">Portfolio</span>
+          </motion.div>
+          
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-6xl md:text-8xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent"
+          >
+            {profile.full_name || profile.username}
+          </motion.h1>
+          
+          {profile.bio && (
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: profile.bio }}
+              suppressHydrationWarning
+            />
+          )}
+          
+          {/* Social Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex items-center justify-center gap-4 mt-10"
+          >
+            {profile.github_url && (
+              <a href={profile.github_url} target="_blank" className="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2">
+                GitHub <ArrowUpRight className="w-4 h-4" />
+              </a>
+            )}
+            {profile.linkedin_url && (
+              <a href={profile.linkedin_url} target="_blank" className="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2">
+                LinkedIn <ArrowUpRight className="w-4 h-4" />
+              </a>
+            )}
+            {profile.email && (
+              <a href={`mailto:${profile.email}`} className="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2">
+                Email <Mail className="w-4 h-4" />
+              </a>
+            )}
+          </motion.div>
+        </motion.div>
+        
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2"
+          >
+            <div className="w-1 h-2 bg-white/40 rounded-full" />
+          </motion.div>
+        </motion.div>
+      </header>
+
+      <main className="relative max-w-6xl mx-auto px-6 pb-20 space-y-32">
+        {/* Projects */}
+        {profile.projects?.length > 0 && (
+          <section>
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mb-12"
+            >
+              <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Selected Work</span>
+              <h2 className="text-4xl md:text-5xl font-bold mt-2">Projects</h2>
+            </motion.div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {profile.projects.map((project: any, i: number) => (
+                (() => {
+                  const extraImages = (project.images || [])
+                    .map((img: any) => img?.image_url)
+                    .filter(Boolean);
+                  const projectGallery = [project.image_url, ...extraImages]
+                    .filter(Boolean)
+                    .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index);
+
+                  return (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group relative"
+                >
+                  <div
+                    className={`relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all ${
+                      projectGallery.length > 0 ? 'cursor-zoom-in' : ''
+                    }`}
+                    onClick={() => openProjectGallery(projectGallery, 0)}
+                  >
+                    {/* Cover Image or Gallery */}
+                    {(project.image_url || project.images?.length > 0) && (
+                      <div className="h-64 overflow-hidden relative">
+                        {/* Main Cover */}
+                        <img
+                          src={project.image_url || project.images[0]?.image_url}
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+                        
+                        {/* Thumbnail Gallery */}
+                        {project.images?.length > 1 && (
+                          <div className="absolute bottom-2 left-2 right-2 flex gap-2">
+                            {project.images.slice(0, 4).map((img: any, idx: number) => (
+                              <button
+                                key={img.id}
+                                type="button"
+                                className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openProjectGallery(projectGallery, idx + 1);
+                                }}
+                              >
+                                <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                            {project.images.length > 4 && (
+                              <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center text-xs text-white font-medium">
+                                +{project.images.length - 4}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
+                        {project.title}
+                      </h3>
+                      {project.description && (
+                        <p className="text-white/60 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: project.description }} suppressHydrationWarning />
+                      )}
+                      {project.technologies?.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {project.technologies.map((t: string) => (
+                            <span key={t} className="text-xs px-3 py-1 rounded-full bg-white/10 text-white/70">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-4">
+                        {project.live_url && (
+                          <a
+                            href={project.live_url}
+                            target="_blank"
+                            className="text-sm font-medium flex items-center gap-1 hover:text-blue-400 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Live Demo <ArrowUpRight className="w-4 h-4" />
+                          </a>
+                        )}
+                        {project.github_url && (
+                          <a
+                            href={project.github_url}
+                            target="_blank"
+                            className="text-sm font-medium text-white/40 hover:text-white transition-colors flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Source <ArrowUpRight className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+                  );
+                })()
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Experience */}
+        {profile.experiences?.length > 0 && (
+          <section>
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mb-12"
+            >
+              <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Career</span>
+              <h2 className="text-4xl md:text-5xl font-bold mt-2">Experience</h2>
+            </motion.div>
+            
+            <div className="space-y-8">
+              {profile.experiences.map((exp: any, i: number) => (
+                <motion.div
+                  key={exp.id}
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex gap-6 group"
+                >
+                  <div className="flex flex-col items-center">
+                    <div className={`w-4 h-4 rounded-full ${theme.accent}`} />
+                    <div className="w-px h-full bg-white/10 mt-2" />
+                  </div>
+                  <div className="pb-8">
+                    <div className="flex items-baseline gap-4 mb-2">
+                      <h3 className="text-xl font-bold">{exp.role}</h3>
+                      <span className="text-sm text-white/40">
+                        {formatDate(exp.start_date)} — {exp.is_current ? 'Present' : formatDate(exp.end_date)}
+                      </span>
+                    </div>
+                    <p className="text-lg text-white/60 mb-2">{exp.company}</p>
+                    {exp.description && (
+                      <p className="text-white/40 leading-relaxed" dangerouslySetInnerHTML={{ __html: exp.description }} suppressHydrationWarning />
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Skills */}
+        {profile.skills?.length > 0 && (
+          <section>
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mb-12"
+            >
+              <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Expertise</span>
+              <h2 className="text-4xl md:text-5xl font-bold mt-2">Skills</h2>
+            </motion.div>
+            
+            <div className="flex flex-wrap gap-3">
+              {profile.skills.map((skill: any, i: number) => (
+                <motion.div
+                  key={skill.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`px-6 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all ${skill.proficiency >= 80 ? 'border-l-4' : ''}`}
+                  style={skill.proficiency >= 80 ? { borderLeftColor: theme.primary } : {}}
+                >
+                  <span className="font-medium">{skill.name}</span>
+                  {skill.proficiency && (
+                    <span className="ml-2 text-sm text-white/40">{skill.proficiency}%</span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Contact */}
+        <section className="text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Let&apos;s Work Together</h2>
+            <p className="text-white/60 mb-8 max-w-md mx-auto">
+              Have a project in mind? I&apos;d love to hear about it.
+            </p>
+            <div className="max-w-md mx-auto">
+              <ContactForm username={username} />
+            </div>
+          </motion.div>
+        </section>
+      </main>
+
+      {galleryImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={closeProjectGallery}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+            onClick={closeProjectGallery}
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              className="absolute left-4 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex((prev) =>
+                  prev === 0 ? galleryImages.length - 1 : prev - 1,
+                );
+              }}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          <img
+            src={galleryImages[currentImageIndex]}
+            alt="Project screenshot"
+            className="max-w-full max-h-[85vh] object-contain rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              className="absolute right-4 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex((prev) =>
+                  prev === galleryImages.length - 1 ? 0 : prev + 1,
+                );
+              }}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="relative border-t border-white/10 py-8 text-center text-sm text-white/40">
+        <p>Built with <Link href="/" className="hover:text-white transition-colors">Adsum</Link></p>
+      </footer>
+    </div>
+  );
+}

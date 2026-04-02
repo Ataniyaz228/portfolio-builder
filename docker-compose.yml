@@ -1,0 +1,94 @@
+# ============================================
+# Docker Compose — Development Environment
+# ============================================
+# Запуск: docker compose up --build
+# Остановка: docker compose down
+# Очистка данных: docker compose down -v
+# ============================================
+
+services:
+  # ==========================================
+  # PostgreSQL — База данных
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: portfolio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-portfolio_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Персистентное хранение данных
+      - postgres_data:/var/lib/postgresql/data
+      # Автоматический запуск миграций при первом старте
+      - ./portfolio-backend/src/db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-portfolio_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Backend — Node.js + Express API
+  # ==========================================
+  backend:
+    build:
+      context: ./portfolio-backend
+      dockerfile: Dockerfile
+    container_name: portfolio-backend
+    restart: unless-stopped
+    env_file:
+      - ./portfolio-backend/.env
+    environment:
+      # Переопределяем DB_HOST чтобы указать на сервис postgres
+      DB_HOST: postgres
+      NODE_ENV: development
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      # Hot-reload: монтируем исходный код
+      - ./portfolio-backend/src:/app/src:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ==========================================
+  # Frontend — React (dev: Vite, prod: Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./portfolio-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: portfolio-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  # ==========================================
+  # pgAdmin — Веб-интерфейс для PostgreSQL (dev only)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: portfolio-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
