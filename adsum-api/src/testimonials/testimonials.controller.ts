@@ -17,6 +17,11 @@ export class TestimonialsController {
     return this.testimonialsService.findAll(req.user.sub);
   }
 
+  @Patch('reorder')
+  reorder(@Request() req: any, @Body() items: { id: string; order_index: number }[]) {
+    return this.testimonialsService.reorder(req.user.sub, items);
+  }
+
   @Patch(':id')
   update(@Request() req: any, @Param('id') id: string, @Body() data: any) {
     return this.testimonialsService.update(id, req.user.sub, data);

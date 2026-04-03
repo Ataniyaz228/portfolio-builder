@@ -39,6 +39,14 @@ export class TestimonialsService {
     return this.findOne(id, userId);
   }
 
+  async reorder(userId: string, items: { id: string; order_index: number }[]) {
+    const promises = items.map(item =>
+      this.testimonialsRepository.update({ id: item.id, user_id: userId }, { order_index: item.order_index })
+    );
+    await Promise.all(promises);
+    return { success: true };
+  }
+
   async remove(id: string, userId: string) {
     const testimonial = await this.findOne(id, userId);
     await this.testimonialsRepository.remove(testimonial);
