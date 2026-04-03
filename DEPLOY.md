@@ -1,6 +1,54 @@
 # 🚀 Деплой Portfolio — Руководство
 
-## Быстрый старт (Локально)
+## ⚡ Быстрый деплой: Railway + Vercel (Рекомендуется)
+
+### Шаг 1: Закоммить изменения
+```bash
+cd "c:\Users\BINOM\Desktop\project adsum"
+git add .
+git commit -m "feat: prepare for Railway + Vercel deployment"
+git push origin main
+```
+
+### Шаг 2: Деплой Backend на Railway
+1. Перейди на [railway.app](https://railway.app) → Login через GitHub
+2. **New Project** → **Deploy from GitHub repo** → `portfolio-builder`
+3. Выбери сервис → Settings → **Root Directory**: `adsum-api`
+4. Добавь PostgreSQL: **New** → **Database** → **Add PostgreSQL**
+5. В **Variables** добавь:
+   ```
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   JWT_SECRET=your-super-secret-key-min-32-chars
+   FRONTEND_URL=https://your-vercel-app.vercel.app  ← пока оставь так, потом обновишь
+   NODE_ENV=production
+   ```
+6. Railway автоматически задеплоит backend
+7. Скопируй URL бэкенда (например: `https://adsum-api.up.railway.app`)
+
+### Шаг 3: Деплой Frontend на Vercel
+1. Перейди на [vercel.com](https://vercel.com) → Login через GitHub
+2. **Add New Project** → **Import Git Repository** → `portfolio-builder`
+3. В настройках:
+   - **Root Directory**: `adsum-web`
+   - **Framework**: Next.js
+4. В **Environment Variables** добавь:
+   ```
+   NEXT_PUBLIC_API_URL=https://your-railway-url.up.railway.app/api
+   ```
+   (замени на свой URL с Railway)
+5. Нажми **Deploy**
+
+### Шаг 4: Обнови FRONTEND_URL в Railway
+После получения URL от Vercel, вернись в Railway → Variables и обнови:
+```
+FRONTEND_URL=https://your-vercel-app.vercel.app
+```
+
+✅ **Готово!** Frontend: `https://your-app.vercel.app`
+
+---
+
+## 🏠 Локальная разработка
 
 ### Без Docker (разработка)
 ```bash
