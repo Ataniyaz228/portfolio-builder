@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 
 async function getProfileData(username: string) {
   try {
-    const res = await fetch(`http://localhost:3001/api/users/${username}/full`, {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const res = await fetch(`${baseUrl}/users/${username}/full`, {
       cache: 'no-store',
     });
     if (!res.ok) return null;
