@@ -14,10 +14,12 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   isLoading: boolean;
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,7 +28,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      hasHydrated: false,
       isLoading: false,
+
+      setHasHydrated: (value) => set({ hasHydrated: value }),
 
       login: async (credentials) => {
         set({ isLoading: true });
@@ -80,6 +85,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'adsum-auth-storage', // unique name for localStorage
       partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

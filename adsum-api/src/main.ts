@@ -6,16 +6,34 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://localhost:3000',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+    origin: (
+      requestOrigin: string | undefined,
+      cb: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      const allowed = [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.FRONTEND_URL,
+        'https://adsum-portfolio.vercel.app',
+      ].filter(Boolean) as string[];
+
+      const vercelPreview = /\.vercel\.app$/i;
+
+      if (
+        !requestOrigin ||
+        allowed.includes(requestOrigin) ||
+        vercelPreview.test(requestOrigin)
+      ) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
-  
+
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
@@ -28,4 +46,7 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

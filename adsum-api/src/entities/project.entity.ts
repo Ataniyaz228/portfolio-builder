@@ -35,6 +35,15 @@ export class Project {
   @Column({ nullable: true })
   image_url: string;
 
+  @Column({ type: 'boolean', default: false })
+  image_flip_horizontal: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  image_flip_vertical: boolean;
+
+  @Column({ type: 'int', default: 0 })
+  image_rotation: number;
+
   @Column({ nullable: true })
   live_url: string;
 

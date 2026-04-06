@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import MinimalTemplate from './templates/MinimalTemplate';
-import CreativeTemplate from './templates/CreativeTemplate';
-import ProfessionalTemplate from './templates/ProfessionalTemplate';
+import ViewTracker from '@/components/ViewTracker';
+import TemplateRenderer from './TemplateRenderer';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,14 +60,6 @@ export default async function PublicPortfolio({ params }: { params: Promise<{ us
   }
 
   const templateId = profile.template_id || 'creative';
-  
-  const templates: Record<string, React.ComponentType<{ profile: any; username: string }>> = {
-    minimal: MinimalTemplate,
-    creative: CreativeTemplate,
-    professional: ProfessionalTemplate,
-  };
-
-  const SelectedTemplate = templates[templateId] || CreativeTemplate;
 
   // Schema.org JSON-LD
   const schemaOrgData = {
@@ -95,7 +86,8 @@ export default async function PublicPortfolio({ params }: { params: Promise<{ us
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrgData) }}
       />
-      <SelectedTemplate profile={profile} username={resolvedParams.username} />
+      <ViewTracker username={resolvedParams.username} />
+      <TemplateRenderer profile={profile} username={resolvedParams.username} templateId={templateId} />
     </>
   );
 }

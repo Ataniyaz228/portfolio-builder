@@ -9,9 +9,16 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   label?: string;
   className?: string;
+  previewStyle?: React.CSSProperties;
 }
 
-export default function ImageUpload({ value, onChange, label = 'Upload Image', className = '' }: ImageUploadProps) {
+export default function ImageUpload({
+  value,
+  onChange,
+  label = 'Upload Image',
+  className = '',
+  previewStyle,
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -81,7 +88,7 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image', c
     <div className={`space-y-2 ${className}`}>
       {value ? (
         <div className="relative group rounded-xl overflow-hidden border-2 border-border bg-surface aspect-video max-h-48 flex items-center justify-center">
-          <img src={value} alt="Uploaded" className="w-full h-full object-cover" />
+          <img src={value} alt="Uploaded" className="w-full h-full object-cover" style={previewStyle} />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm">
             <button
               type="button"

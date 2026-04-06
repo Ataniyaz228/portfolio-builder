@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Param,
   Body,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -93,5 +95,13 @@ export class UsersController {
     }
     const { password_hash: _, ...publicProfile } = user;
     return publicProfile;
+  }
+
+  @UseGuards(OptionalJwtAuthGuard)
+  @Post(':username/track-view')
+  async trackView(@Param('username') username: string, @Request() req: any) {
+    const viewerId: string | undefined = req.user?.sub;
+    await this.usersService.trackProfileView(username, viewerId);
+    return { tracked: true };
   }
 }

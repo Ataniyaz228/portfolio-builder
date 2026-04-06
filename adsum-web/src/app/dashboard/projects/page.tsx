@@ -15,14 +15,51 @@ interface Project {
   title: string;
   description: string;
   image_url: string;
+  image_flip_horizontal: boolean;
+  image_flip_vertical: boolean;
+  image_rotation: number;
   live_url: string;
   github_url: string;
   technologies: string[];
-  images?: { id: string; image_url: string; order_index: number }[];
+  images?: {
+    id: string;
+    image_url: string;
+    order_index: number;
+    flip_horizontal?: boolean;
+    flip_vertical?: boolean;
+    rotation_degrees?: number;
+  }[];
 }
 
 const emptyProject: Omit<Project, 'id'> = {
-  title: '', description: '', image_url: '', live_url: '', github_url: '', technologies: [],
+  title: '',
+  description: '',
+  image_url: '',
+  image_flip_horizontal: false,
+  image_flip_vertical: false,
+  image_rotation: 0,
+  live_url: '',
+  github_url: '',
+  technologies: [],
+};
+
+const getProjectPreviewText = (html: string) => {
+  const withoutTags = html.replace(/<[^>]*>/g, ' ');
+
+  if (typeof window === 'undefined') {
+    return withoutTags
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = withoutTags;
+
+  return textarea.value
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 export default function ProjectsPage() {
@@ -55,6 +92,9 @@ export default function ProjectsPage() {
     setEditingProject(project);
     setFormData({
       title: project.title, description: project.description || '',
+      image_flip_horizontal: project.image_flip_horizontal || false,
+      image_flip_vertical: project.image_flip_vertical || false,
+      image_rotation: project.image_rotation || 0,
       image_url: project.image_url || '', live_url: project.live_url || '',
       github_url: project.github_url || '', technologies: project.technologies || [],
     });
@@ -111,6 +151,29 @@ export default function ProjectsPage() {
     : null;
 
   const inputClass = "w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all font-medium placeholder:text-muted/50 text-foreground";
+
+  const getImageTransformStyle = (flipHorizontal?: boolean, flipVertical?: boolean) => {
+    const transforms: string[] = [];
+    transforms.push(`rotate(${formData.image_rotation}deg)`);
+    if (flipHorizontal) transforms.push('scaleX(-1)');
+    if (flipVertical) transforms.push('scaleY(-1)');
+    return transforms.length ? { transform: transforms.join(' ') } : undefined;
+  };
+
+  const normalizeRotation = (rotation = 0) => ((rotation % 360) + 360) % 360;
+
+  const isQuarterTurn = (rotation = 0) => normalizeRotation(rotation) % 180 !== 0;
+
+  const getCardImageTransformStyle = (
+    flipHorizontal?: boolean,
+    flipVertical?: boolean,
+    rotation = 0,
+  ) => {
+    const transforms: string[] = [`rotate(${normalizeRotation(rotation)}deg)`];
+    if (flipHorizontal) transforms.push('scaleX(-1)');
+    if (flipVertical) transforms.push('scaleY(-1)');
+    return { transform: transforms.join(' '), transformOrigin: 'center' as const };
+  };
 
   const getDnDCardStyle = (style: any, isDragging: boolean) => {
     const dragTransform = style?.transform;
@@ -173,7 +236,28 @@ export default function ProjectsPage() {
                       >
                         {project.image_url && (
                           <div className="h-36 overflow-hidden bg-background relative">
-                            <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <div
+                              className={`w-full h-full ${
+                                isQuarterTurn(project.image_rotation)
+                                  ? 'flex items-center justify-center bg-background'
+                                  : ''
+                              }`}
+                            >
+                              <img
+                                src={project.image_url}
+                                alt={project.title}
+                                className={`w-full h-full transition-transform duration-500 ${
+                                  isQuarterTurn(project.image_rotation)
+                                    ? 'object-contain group-hover:scale-[1.02]'
+                                    : 'object-cover group-hover:scale-105'
+                                }`}
+                                style={getCardImageTransformStyle(
+                                  project.image_flip_horizontal,
+                                  project.image_flip_vertical,
+                                  project.image_rotation,
+                                )}
+                              />
+                            </div>
                             <div
                               {...provided.dragHandleProps}
                               className={`absolute top-2 left-2 p-1.5 bg-white/80 backdrop-blur text-foreground rounded-lg transition-colors shadow-soft ${
@@ -212,7 +296,11 @@ export default function ProjectsPage() {
                               </button>
                             </div>
                           </div>
-                          {project.description && <p className="text-xs text-muted mb-3 line-clamp-2">{project.description.replace(/<[^>]*>/g, '')}</p>}
+                          {project.description && (
+                            <p className="text-xs text-muted mb-3 line-clamp-2">
+                              {getProjectPreviewText(project.description)}
+                            </p>
+                          )}
                           {project.technologies?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
                               {project.technologies.map(t => (
@@ -286,7 +374,63 @@ export default function ProjectsPage() {
                     value={formData.image_url}
                     onChange={(url) => setFormData({ ...formData, image_url: url })}
                     label="Upload Project Cover"
+                    previewStyle={getImageTransformStyle(
+                      formData.image_flip_horizontal,
+                      formData.image_flip_vertical,
+                    )}
                   />
+                  {formData.image_url && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          image_flip_horizontal: !formData.image_flip_horizontal,
+                        })}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                          formData.image_flip_horizontal
+                            ? 'border-foreground bg-foreground text-surface'
+                            : 'border-border bg-background text-foreground hover:bg-surface-raised'
+                        }`}
+                      >
+                        Flip Horizontal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          image_flip_vertical: !formData.image_flip_vertical,
+                        })}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                          formData.image_flip_vertical
+                            ? 'border-foreground bg-foreground text-surface'
+                            : 'border-border bg-background text-foreground hover:bg-surface-raised'
+                        }`}
+                      >
+                        Flip Vertical
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          image_rotation: (formData.image_rotation - 90 + 360) % 360,
+                        })}
+                        className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-surface-raised transition-colors"
+                      >
+                        Rotate Left
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          image_rotation: (formData.image_rotation + 90) % 360,
+                        })}
+                        className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-surface-raised transition-colors"
+                      >
+                        Rotate Right
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

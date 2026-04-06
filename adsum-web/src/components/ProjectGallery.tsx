@@ -11,6 +11,9 @@ interface ProjectImage {
   id: string;
   image_url: string;
   order_index: number;
+  flip_horizontal?: boolean;
+  flip_vertical?: boolean;
+  rotation_degrees?: number;
 }
 
 interface ProjectGalleryProps {
@@ -25,6 +28,9 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
   const [orderedImages, setOrderedImages] = useState<ProjectImage[]>([]);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [dragUnlockId, setDragUnlockId] = useState<string | null>(null);
+  const [newImageFlipHorizontal, setNewImageFlipHorizontal] = useState(false);
+  const [newImageFlipVertical, setNewImageFlipVertical] = useState(false);
+  const [newImageRotationDegrees, setNewImageRotationDegrees] = useState(0);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -46,17 +52,76 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
     }, 300);
   };
 
+  const handleToggleImageFlip = async (
+    image: ProjectImage,
+    axis: 'horizontal' | 'vertical',
+  ) => {
+    const nextHorizontal = axis === 'horizontal'
+      ? !image.flip_horizontal
+      : !!image.flip_horizontal;
+    const nextVertical = axis === 'vertical'
+      ? !image.flip_vertical
+      : !!image.flip_vertical;
+
+    try {
+      await api.patch(`/projects/images/${image.id}/transform`, {
+        flip_horizontal: nextHorizontal,
+        flip_vertical: nextVertical,
+        rotation_degrees: image.rotation_degrees ?? 0,
+      });
+      await onUpdate();
+    } catch (err) {
+      console.error('Failed to update image flip:', err);
+    }
+  };
+
+  const handleRotateImage = async (image: ProjectImage, direction: 'left' | 'right') => {
+    const delta = direction === 'left' ? -90 : 90;
+    const current = image.rotation_degrees ?? 0;
+    const nextRotation = ((current + delta) % 360 + 360) % 360;
+
+    try {
+      await api.patch(`/projects/images/${image.id}/transform`, {
+        flip_horizontal: image.flip_horizontal,
+        flip_vertical: image.flip_vertical,
+        rotation_degrees: nextRotation,
+      });
+      await onUpdate();
+    } catch (err) {
+      console.error('Failed to update image rotation:', err);
+    }
+  };
+
   const cancelLongPress = () => {
     if (!longPressTimerRef.current) return;
     clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = null;
   };
 
+  const getImageTransformStyle = (
+    flipHorizontal?: boolean,
+    flipVertical?: boolean,
+    rotationDegrees = 0,
+  ) => {
+    const transforms: string[] = [`rotate(${rotationDegrees}deg)`];
+    if (flipHorizontal) transforms.push('scaleX(-1)');
+    if (flipVertical) transforms.push('scaleY(-1)');
+    return transforms.length ? { transform: transforms.join(' ') } : undefined;
+  };
+
   const handleImageUpload = async (url: string) => {
     if (orderedImages.length >= 5) return;
     setUploading(true);
     try {
-      await api.post(`/projects/${projectId}/images`, { image_url: url });
+      await api.post(`/projects/${projectId}/images`, {
+        image_url: url,
+        flip_horizontal: newImageFlipHorizontal,
+        flip_vertical: newImageFlipVertical,
+        rotation_degrees: newImageRotationDegrees,
+      });
+      setNewImageFlipHorizontal(false);
+      setNewImageFlipVertical(false);
+      setNewImageRotationDegrees(0);
       await onUpdate();
     } catch (err) {
       console.error('Failed to add image:', err);
@@ -137,18 +202,65 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
                           style={dragProvided.draggableProps.style}
                           className="relative aspect-video rounded-lg overflow-hidden border border-border group"
                         >
-                          <img src={img.image_url} alt="" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <div
+                            className="w-full h-full"
+                            style={getImageTransformStyle(
+                              img.flip_horizontal,
+                              img.flip_vertical,
+                              img.rotation_degrees,
+                            )}
+                          >
+                            <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 flex items-center justify-center">
+                            <div className="grid grid-cols-3 gap-1 max-w-full">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleImageFlip(img, 'horizontal')}
+                              className={`w-7 h-7 text-[10px] rounded text-white transition-colors ${
+                                img.flip_horizontal ? 'bg-white/35' : 'bg-white/20 hover:bg-white/30'
+                              }`}
+                              title="Flip Horizontal"
+                            >
+                              H
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleImageFlip(img, 'vertical')}
+                              className={`w-7 h-7 text-[10px] rounded text-white transition-colors ${
+                                img.flip_vertical ? 'bg-white/35' : 'bg-white/20 hover:bg-white/30'
+                              }`}
+                              title="Flip Vertical"
+                            >
+                              V
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRotateImage(img, 'left')}
+                              className="w-7 h-7 text-[10px] rounded text-white bg-white/20 hover:bg-white/30 transition-colors"
+                              title="Rotate Left"
+                            >
+                              L
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRotateImage(img, 'right')}
+                              className="w-7 h-7 text-[10px] rounded text-white bg-white/20 hover:bg-white/30 transition-colors"
+                              title="Rotate Right"
+                            >
+                              R
+                            </button>
                             <div
                               {...dragProvided.dragHandleProps}
                               onTouchStart={() => beginLongPress(img.id)}
                               onTouchEnd={cancelLongPress}
                               onTouchCancel={cancelLongPress}
-                              className={`p-1.5 rounded text-white ${
+                              className={`w-7 h-7 rounded text-white flex items-center justify-center ${
                                 isTouchDevice && dragUnlockId !== img.id
                                   ? 'bg-white/30'
                                   : 'bg-white/20 cursor-grab'
                               }`}
+                              title="Drag"
                             >
                               <GripVertical className="w-4 h-4" />
                             </div>
@@ -156,7 +268,8 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
                               type="button"
                               onClick={() => handleDelete(img.id)}
                               disabled={deletingId === img.id}
-                              className="p-1.5 bg-red-500/80 rounded text-white hover:bg-red-500 transition-colors"
+                              className="w-7 h-7 bg-red-500/80 rounded text-white hover:bg-red-500 transition-colors flex items-center justify-center"
+                              title="Delete"
                             >
                               {deletingId === img.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -164,6 +277,7 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
                                 <X className="w-4 h-4" />
                               )}
                             </button>
+                            </div>
                           </div>
                           <div className="absolute top-1 left-1 w-5 h-5 bg-foreground text-surface rounded-full flex items-center justify-center text-[10px] font-bold">
                             {i + 1}
@@ -190,11 +304,51 @@ export default function ProjectGallery({ projectId, images, onUpdate }: ProjectG
 
       {/* Add Image Button */}
       {orderedImages.length < 5 && (
-        <ImageUpload
-          value=""
-          onChange={handleImageUpload}
-          label={uploading ? 'Uploading...' : 'Add Screenshot'}
-        />
+        <div className="space-y-2">
+          <ImageUpload
+            value=""
+            onChange={handleImageUpload}
+            label={uploading ? 'Uploading...' : 'Add Screenshot'}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setNewImageFlipHorizontal((prev) => !prev)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                newImageFlipHorizontal
+                  ? 'border-foreground bg-foreground text-surface'
+                  : 'border-border bg-background text-foreground hover:bg-surface-raised'
+              }`}
+            >
+              Next image: Flip Horizontal
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewImageFlipVertical((prev) => !prev)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                newImageFlipVertical
+                  ? 'border-foreground bg-foreground text-surface'
+                  : 'border-border bg-background text-foreground hover:bg-surface-raised'
+              }`}
+            >
+              Next image: Flip Vertical
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewImageRotationDegrees((prev) => ((prev - 90) % 360 + 360) % 360)}
+              className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-surface-raised transition-colors"
+            >
+              Next image: Rotate Left
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewImageRotationDegrees((prev) => (prev + 90) % 360)}
+              className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-surface-raised transition-colors"
+            >
+              Next image: Rotate Right
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

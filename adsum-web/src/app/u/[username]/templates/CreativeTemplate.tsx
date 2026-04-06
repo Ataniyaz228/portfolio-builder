@@ -2,13 +2,22 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Mail, Star, Briefcase, Code2, Quote, Sparkles, ArrowUpRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExternalLink, Mail, Star, Briefcase, Code2, Quote, ArrowUpRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import AdsumLogo from '@/components/AdsumLogo';
 import Link from 'next/link';
 import ContactForm from '../ContactForm';
+import { LiquidButton } from '@/components/ui/liquid-glass-button';
 
 interface CreativeTemplateProps {
   profile: any;
   username: string;
+}
+
+interface GalleryImage {
+  url: string;
+  flip_horizontal?: boolean;
+  flip_vertical?: boolean;
+  rotation_degrees?: number;
 }
 
 const colorThemes: Record<string, { primary: string; gradient: string; accent: string }> = {
@@ -21,15 +30,16 @@ const colorThemes: Record<string, { primary: string; gradient: string; accent: s
 
 export default function CreativeTemplate({ profile, username }: CreativeTemplateProps) {
   const theme = colorThemes[profile.theme_color] || colorThemes.blue;
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
   
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
-  const openProjectGallery = (images: string[], startIndex = 0) => {
+  const openProjectGallery = (images: GalleryImage[], startIndex = 0) => {
     if (images.length === 0) return;
     setGalleryImages(images);
     setCurrentImageIndex(startIndex);
@@ -38,6 +48,36 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
   const closeProjectGallery = () => {
     setGalleryImages([]);
     setCurrentImageIndex(0);
+  };
+
+  const getImageTransformStyle = (
+    flipHorizontal?: boolean,
+    flipVertical?: boolean,
+    rotationDegrees = 0,
+  ) => {
+    const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+    const transforms: string[] = [`rotate(${normalizedRotation}deg)`];
+    if (flipHorizontal) transforms.push('scaleX(-1)');
+    if (flipVertical) transforms.push('scaleY(-1)');
+    return transforms.length ? { transform: transforms.join(' ') } : undefined;
+  };
+
+  const isQuarterTurn = (rotationDegrees = 0) => {
+    const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+    return normalizedRotation % 180 !== 0;
+  };
+
+  const getDescriptionText = (html = '') => {
+    const withoutTags = html.replace(/<[^>]*>/g, ' ');
+
+    if (typeof window === 'undefined') {
+      return withoutTags.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = withoutTags;
+
+    return textarea.value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
   };
 
   return (
@@ -49,23 +89,35 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
       </div>
 
       {/* Hero */}
-      <header className="relative min-h-[70vh] flex items-center justify-center px-6">
+      <header className="relative min-h-[88vh] flex items-center justify-center px-6 pt-20 pb-24">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-4xl"
+          className="text-center max-w-4xl w-full"
         >
-          {profile.avatar_url && (
-            <motion.img
-              src={profile.avatar_url}
-              alt={profile.full_name}
-              className="w-32 h-32 rounded-full object-cover mx-auto mb-8 border-4 border-white/10"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="relative w-32 h-32 mx-auto mb-10"
+          >
+            <div
+              className="absolute -inset-2 rounded-full blur-xl opacity-70"
+              style={{ backgroundColor: `${theme.primary}33` }}
             />
-          )}
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="relative w-32 h-32 rounded-full object-cover border-4 border-white/15 shadow-2xl"
+              />
+            ) : (
+              <div className="relative w-32 h-32 rounded-full bg-white/10 border-4 border-white/15 flex items-center justify-center text-4xl font-bold text-white/70">
+                {(profile.full_name || profile.username)?.charAt(0)}
+              </div>
+            )}
+          </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -73,7 +125,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             transition={{ delay: 0.3 }}
             className="flex items-center justify-center gap-2 mb-4"
           >
-            <Sparkles className="w-5 h-5" style={{ color: theme.primary }} />
+            <AdsumLogo className="w-5 h-5" style={{ color: theme.primary }} />
             <span className="text-sm font-medium text-white/60 uppercase tracking-widest">Portfolio</span>
           </motion.div>
           
@@ -81,7 +133,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-6xl md:text-8xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent"
+            className="text-6xl md:text-8xl font-bold tracking-tight leading-[1.2] pb-2 mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent"
           >
             {profile.full_name || profile.username}
           </motion.h1>
@@ -102,7 +154,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-4 mt-10"
+            className="flex flex-wrap items-center justify-center gap-4 mt-10"
           >
             {profile.github_url && (
               <a href={profile.github_url} target="_blank" className="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2">
@@ -127,14 +179,18 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2"
         >
           <motion.div
-            animate={{ y: [0, 10, 0] }}
+            animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2"
+            className="w-6 h-10 rounded-full border-2 border-white/20 bg-white/[0.03] flex items-start justify-center p-2 overflow-hidden"
           >
-            <div className="w-1 h-2 bg-white/40 rounded-full" />
+            <motion.div
+              animate={{ y: [0, 14, 0], opacity: [0.9, 0.3, 0.9] }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+              className="w-1 h-2 bg-white/60 rounded-full"
+            />
           </motion.div>
         </motion.div>
       </header>
@@ -156,12 +212,38 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {profile.projects.map((project: any, i: number) => (
                 (() => {
-                  const extraImages = (project.images || [])
-                    .map((img: any) => img?.image_url)
-                    .filter(Boolean);
-                  const projectGallery = [project.image_url, ...extraImages]
-                    .filter(Boolean)
-                    .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index);
+                  const coverImage: GalleryImage[] = project.image_url
+                    ? [{
+                        url: project.image_url,
+                        flip_horizontal: project.image_flip_horizontal,
+                        flip_vertical: project.image_flip_vertical,
+                        rotation_degrees: project.image_rotation,
+                      }]
+                    : [];
+
+                  const extraImages: GalleryImage[] = (project.images || [])
+                    .map((img: any) => ({
+                      url: img?.image_url,
+                      flip_horizontal: img?.flip_horizontal,
+                      flip_vertical: img?.flip_vertical,
+                      rotation_degrees: img?.rotation_degrees,
+                    }))
+                    .filter((img: GalleryImage) => Boolean(img.url));
+
+                  const projectGallery = [...coverImage, ...extraImages]
+                    .filter((img: GalleryImage, index: number, arr: GalleryImage[]) =>
+                      arr.findIndex((item) => item.url === img.url) === index,
+                    );
+
+                  const primaryFlipHorizontal = project.image_url
+                    ? project.image_flip_horizontal
+                    : project.images?.[0]?.flip_horizontal;
+                  const primaryFlipVertical = project.image_url
+                    ? project.image_flip_vertical
+                    : project.images?.[0]?.flip_vertical;
+                  const primaryRotation = project.image_url
+                    ? project.image_rotation
+                    : project.images?.[0]?.rotation_degrees;
 
                   return (
                 <motion.div
@@ -172,21 +254,44 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                   transition={{ delay: i * 0.1 }}
                   className="group relative"
                 >
+                  {(() => {
+                    const isDescriptionExpanded = Boolean(expandedDescriptions[project.id]);
+                    const descriptionText = getDescriptionText(project.description || '');
+                    const canExpandDescription = descriptionText.length > 170;
+
+                    return (
                   <div
-                    className={`relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all ${
-                      projectGallery.length > 0 ? 'cursor-zoom-in' : ''
-                    }`}
-                    onClick={() => openProjectGallery(projectGallery, 0)}
+                    className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
                   >
                     {/* Cover Image or Gallery */}
                     {(project.image_url || project.images?.length > 0) && (
-                      <div className="h-64 overflow-hidden relative">
+                      <div
+                        className={`h-64 overflow-hidden relative ${
+                          projectGallery.length > 0 ? 'cursor-zoom-in' : ''
+                        }`}
+                        onClick={() => openProjectGallery(projectGallery, 0)}
+                      >
                         {/* Main Cover */}
-                        <img
-                          src={project.image_url || project.images[0]?.image_url}
-                          alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
+                        <div
+                          className={`w-full h-full ${
+                            isQuarterTurn(primaryRotation) ? 'flex items-center justify-center bg-white/5' : ''
+                          }`}
+                        >
+                          <img
+                            src={project.image_url || project.images[0]?.image_url}
+                            alt={project.title}
+                            className={`w-full h-full transition-transform duration-700 ${
+                              isQuarterTurn(primaryRotation)
+                                ? 'object-contain group-hover:scale-[1.02]'
+                                : 'object-cover group-hover:scale-110'
+                            }`}
+                            style={getImageTransformStyle(
+                              primaryFlipHorizontal,
+                              primaryFlipVertical,
+                              primaryRotation,
+                            )}
+                          />
+                        </div>
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
                         
                         {/* Thumbnail Gallery */}
@@ -199,10 +304,20 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                                 className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openProjectGallery(projectGallery, idx + 1);
+                                  const targetIndex = projectGallery.findIndex((item) => item.url === img.image_url);
+                                  openProjectGallery(projectGallery, targetIndex === -1 ? 0 : targetIndex);
                                 }}
                               >
-                                <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                                <div
+                                  className="w-full h-full"
+                                  style={getImageTransformStyle(
+                                    img.flip_horizontal,
+                                    img.flip_vertical,
+                                    img.rotation_degrees,
+                                  )}
+                                >
+                                  <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                                </div>
                               </button>
                             ))}
                             {project.images.length > 4 && (
@@ -214,12 +329,33 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                         )}
                       </div>
                     )}
-                    <div className="p-6">
+                    <div className="p-6 border-t border-white/10 bg-slate-950/65">
                       <h3 className="text-2xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
                         {project.title}
                       </h3>
                       {project.description && (
-                        <p className="text-white/60 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: project.description }} suppressHydrationWarning />
+                        <>
+                          <p
+                            className={`text-white/60 mb-2 ${isDescriptionExpanded ? '' : 'line-clamp-2'}`}
+                          >
+                            {descriptionText}
+                          </p>
+                          {canExpandDescription && (
+                            <button
+                              type="button"
+                              className="mb-4 text-xs font-semibold text-white/80 hover:text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedDescriptions((prev) => ({
+                                  ...prev,
+                                  [project.id]: !isDescriptionExpanded,
+                                }));
+                              }}
+                            >
+                              {isDescriptionExpanded ? 'Show less' : 'Show more'}
+                            </button>
+                          )}
+                        </>
                       )}
                       {project.technologies?.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -254,6 +390,8 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                       </div>
                     </div>
                   </div>
+                    );
+                  })()}
                 </motion.div>
                   );
                 })()
@@ -388,9 +526,14 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
           )}
 
           <img
-            src={galleryImages[currentImageIndex]}
+            src={galleryImages[currentImageIndex]?.url}
             alt="Project screenshot"
             className="max-w-full max-h-[85vh] object-contain rounded-xl"
+            style={getImageTransformStyle(
+              galleryImages[currentImageIndex]?.flip_horizontal,
+              galleryImages[currentImageIndex]?.flip_vertical,
+              galleryImages[currentImageIndex]?.rotation_degrees,
+            )}
             onClick={(e) => e.stopPropagation()}
           />
 

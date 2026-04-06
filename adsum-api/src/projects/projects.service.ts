@@ -13,6 +13,10 @@ export class ProjectsService {
     private projectImagesRepository: Repository<ProjectImage>,
   ) {}
 
+  private normalizeRotation(rotation = 0) {
+    return ((rotation % 360) + 360) % 360;
+  }
+
   async findAll(userId: string) {
     return this.projectsRepository.find({
       where: { user_id: userId },
@@ -50,17 +54,53 @@ export class ProjectsService {
     return { success: true };
   }
 
-  async addImage(projectId: string, userId: string, imageUrl: string) {
-    const project = await this.findOne(projectId, userId);
+  async addImage(
+    projectId: string,
+    userId: string,
+    imageUrl: string,
+    flipHorizontal = false,
+    flipVertical = false,
+    rotationDegrees = 0,
+  ) {
+    await this.findOne(projectId, userId);
     const count = await this.projectImagesRepository.count({ where: { project_id: projectId } });
     if (count >= 5) throw new NotFoundException('Maximum 5 images allowed');
     
     const image = this.projectImagesRepository.create({
       project_id: projectId,
       image_url: imageUrl,
+      flip_horizontal: flipHorizontal,
+      flip_vertical: flipVertical,
+      rotation_degrees: this.normalizeRotation(rotationDegrees),
       order_index: count,
     });
     return this.projectImagesRepository.save(image);
+  }
+
+  async updateImageTransform(
+    imageId: string,
+    userId: string,
+    data: { flip_horizontal?: boolean; flip_vertical?: boolean; rotation_degrees?: number },
+  ) {
+    const image = await this.projectImagesRepository.findOne({
+      where: { id: imageId },
+      relations: ['project'],
+    });
+
+    if (!image || image.project.user_id !== userId) {
+      throw new NotFoundException('Image not found');
+    }
+
+    await this.projectImagesRepository.update(
+      { id: imageId },
+      {
+        flip_horizontal: data.flip_horizontal ?? image.flip_horizontal,
+        flip_vertical: data.flip_vertical ?? image.flip_vertical,
+        rotation_degrees: this.normalizeRotation(data.rotation_degrees ?? image.rotation_degrees),
+      },
+    );
+
+    return this.projectImagesRepository.findOne({ where: { id: imageId } });
   }
 
   async removeImage(imageId: string, userId: string) {
@@ -76,7 +116,7 @@ export class ProjectsService {
   }
 
   async reorderImages(projectId: string, userId: string, items: { id: string; order_index: number }[]) {
-    const project = await this.findOne(projectId, userId);
+    await this.findOne(projectId, userId);
     for (const item of items) {
       await this.projectImagesRepository.update(
         { id: item.id, project_id: projectId },

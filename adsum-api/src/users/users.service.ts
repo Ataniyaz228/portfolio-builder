@@ -20,19 +20,21 @@ export class UsersService {
   }
 
   async findByUsernameWithRelations(username: string) {
-    const user = await this.usersRepository.findOne({
+    return this.usersRepository.findOne({
       where: { username },
       relations: ['projects', 'projects.images', 'skills', 'experiences', 'testimonials'],
     });
+  }
 
-    if (user) {
-      // Increment profile views
-      await this.usersRepository.increment({ id: user.id }, 'profile_views', 1);
-      // Log daily view
-      await this.logDailyView(user.id);
-    }
+  async trackProfileView(username: string, viewerId?: string) {
+    const user = await this.usersRepository.findOne({ where: { username } });
+    if (!user) return;
 
-    return user;
+    // Skip tracking if the viewer is the profile owner
+    if (viewerId && user.id === viewerId) return;
+
+    await this.usersRepository.increment({ id: user.id }, 'profile_views', 1);
+    await this.logDailyView(user.id);
   }
 
   async getUserStats(userId: string) {
@@ -105,7 +107,12 @@ export class UsersService {
     const now = new Date();
     for (let d = new Date(startDate); d <= now; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
-      const found = views.find((v: any) => v.date === dateStr);
+      const found = views.find((v: any) => {
+        const vDate = v.date instanceof Date
+          ? v.date.toISOString().split('T')[0]
+          : String(v.date).split('T')[0];
+        return vDate === dateStr;
+      });
       result.push({ date: dateStr, views: found ? Number(found.views) : 0 });
     }
 

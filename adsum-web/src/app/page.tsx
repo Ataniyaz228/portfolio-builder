@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useMotionValue, useSpring, Variants } from 'framer-motion';
 import { ArrowRight, Code2, Globe, Sparkles, Zap, CheckCircle2, Users, Star, Layers, Briefcase, GraduationCap, Palette } from 'lucide-react';
+import AdsumLogo from '@/components/AdsumLogo';
 import Link from 'next/link';
 
 /* ─── Floating Shapes Background ─── */
@@ -185,7 +186,7 @@ export default function Home() {
             whileHover={{ rotate: 15, scale: 1.1 }}
             transition={{ type: 'spring', stiffness: 300 }}
           >
-            <Sparkles className="w-4 h-4" />
+            <AdsumLogo className="w-4 h-4" />
           </motion.div>
           Adsum.
         </div>
@@ -385,7 +386,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2 text-lg font-bold tracking-tighter text-foreground">
             <div className="w-7 h-7 rounded-lg bg-sidebar flex items-center justify-center text-white">
-              <Sparkles className="w-3.5 h-3.5" />
+              <AdsumLogo className="w-3.5 h-3.5" />
             </div>
             Adsum.
           </div>

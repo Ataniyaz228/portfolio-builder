@@ -25,6 +25,15 @@ export class ProjectImage {
   @Column()
   image_url: string;
 
+  @Column({ type: 'boolean', default: false })
+  flip_horizontal: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  flip_vertical: boolean;
+
+  @Column({ type: 'int', default: 0 })
+  rotation_degrees: number;
+
   @Column({ type: 'int', default: 0 })
   order_index: number;
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, UserPlus, Eye, EyeOff, Code2, Palette, GraduationCap, Briefcase, CheckCircle2, Globe, Zap, Shield } from 'lucide-react';
+import { ArrowRight, UserPlus, Eye, EyeOff, Code2, Palette, GraduationCap, Briefcase, CheckCircle2, Globe, Zap, Shield } from 'lucide-react';
+import AdsumLogo from '@/components/AdsumLogo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -146,7 +147,7 @@ export default function RegisterPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tighter text-white mb-16">
             <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+              <AdsumLogo className="w-4 h-4" />
             </div>
             Adsum.
           </Link>
@@ -175,7 +176,7 @@ export default function RegisterPage() {
         {/* Mobile logo */}
         <Link href="/" className="lg:hidden absolute top-6 left-6 flex items-center gap-2 text-lg font-bold tracking-tighter">
           <div className="w-8 h-8 rounded-xl bg-sidebar flex items-center justify-center text-white">
-            <Sparkles className="w-4 h-4" />
+            <AdsumLogo className="w-4 h-4" />
           </div>
           Adsum.
         </Link>

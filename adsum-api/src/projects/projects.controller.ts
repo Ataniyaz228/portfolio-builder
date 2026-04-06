@@ -54,9 +54,36 @@ export class ProjectsController {
   addImage(
     @Param('id') id: string,
     @Req() req: any,
-    @Body() data: { image_url: string },
+    @Body()
+    data: {
+      image_url: string;
+      flip_horizontal?: boolean;
+      flip_vertical?: boolean;
+      rotation_degrees?: number;
+    },
   ) {
-    return this.projectsService.addImage(id, req.user.sub, data.image_url);
+    return this.projectsService.addImage(
+      id,
+      req.user.sub,
+      data.image_url,
+      data.flip_horizontal ?? false,
+      data.flip_vertical ?? false,
+      data.rotation_degrees ?? 0,
+    );
+  }
+
+  @Patch('images/:imageId/transform')
+  updateImageTransform(
+    @Param('imageId') imageId: string,
+    @Req() req: any,
+    @Body()
+    data: {
+      flip_horizontal?: boolean;
+      flip_vertical?: boolean;
+      rotation_degrees?: number;
+    },
+  ) {
+    return this.projectsService.updateImageTransform(imageId, req.user.sub, data);
   }
 
   @Delete('images/:imageId')

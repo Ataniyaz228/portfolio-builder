@@ -5,9 +5,6 @@ import { motion } from 'framer-motion';
 import {
   ExternalLink,
   Mail,
-  Linkedin,
-  Github,
-  Twitter,
   Briefcase,
   MapPin,
   Calendar,
@@ -23,16 +20,24 @@ interface ProfessionalTemplateProps {
   username: string;
 }
 
+interface GalleryImage {
+  url: string;
+  flip_horizontal?: boolean;
+  flip_vertical?: boolean;
+  rotation_degrees?: number;
+}
+
 export default function ProfessionalTemplate({ profile, username }: ProfessionalTemplateProps) {
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const openProjectGallery = (images: string[], startIndex = 0) => {
+  const openProjectGallery = (images: GalleryImage[], startIndex = 0) => {
     if (images.length === 0) return;
     setGalleryImages(images);
     setCurrentImageIndex(startIndex);
@@ -41,6 +46,36 @@ export default function ProfessionalTemplate({ profile, username }: Professional
   const closeProjectGallery = () => {
     setGalleryImages([]);
     setCurrentImageIndex(0);
+  };
+
+  const getImageTransformStyle = (
+    flipHorizontal?: boolean,
+    flipVertical?: boolean,
+    rotationDegrees = 0,
+  ) => {
+    const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+    const transforms: string[] = [`rotate(${normalizedRotation}deg)`];
+    if (flipHorizontal) transforms.push('scaleX(-1)');
+    if (flipVertical) transforms.push('scaleY(-1)');
+    return transforms.length ? { transform: transforms.join(' ') } : undefined;
+  };
+
+  const isQuarterTurn = (rotationDegrees = 0) => {
+    const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+    return normalizedRotation % 180 !== 0;
+  };
+
+  const getDescriptionText = (html = '') => {
+    const withoutTags = html.replace(/<[^>]*>/g, ' ');
+
+    if (typeof window === 'undefined') {
+      return withoutTags.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = withoutTags;
+
+    return textarea.value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
   };
 
   return (
@@ -188,12 +223,41 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                 <div className="grid grid-cols-1 gap-6">
                   {profile.projects.map((project: any, i: number) => (
                     (() => {
-                      const extraImages = (project.images || [])
-                        .map((img: any) => img?.image_url)
-                        .filter(Boolean);
-                      const projectGallery = [project.image_url, ...extraImages]
-                        .filter(Boolean)
-                        .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index);
+                      const coverImage: GalleryImage[] = project.image_url
+                        ? [{
+                            url: project.image_url,
+                            flip_horizontal: project.image_flip_horizontal,
+                            flip_vertical: project.image_flip_vertical,
+                            rotation_degrees: project.image_rotation,
+                          }]
+                        : [];
+
+                      const extraImages: GalleryImage[] = (project.images || [])
+                        .map((img: any) => ({
+                          url: img?.image_url,
+                          flip_horizontal: img?.flip_horizontal,
+                          flip_vertical: img?.flip_vertical,
+                          rotation_degrees: img?.rotation_degrees,
+                        }))
+                        .filter((img: GalleryImage) => Boolean(img.url));
+
+                      const projectGallery = [...coverImage, ...extraImages]
+                        .filter((img: GalleryImage, index: number, arr: GalleryImage[]) =>
+                          arr.findIndex((item) => item.url === img.url) === index,
+                        );
+
+                      const primaryFlipHorizontal = project.image_url
+                        ? project.image_flip_horizontal
+                        : project.images?.[0]?.flip_horizontal;
+                      const primaryFlipVertical = project.image_url
+                        ? project.image_flip_vertical
+                        : project.images?.[0]?.flip_vertical;
+                      const primaryRotation = project.image_url
+                        ? project.image_rotation
+                        : project.images?.[0]?.rotation_degrees;
+                      const isDescriptionExpanded = Boolean(expandedDescriptions[project.id]);
+                      const descriptionText = getDescriptionText(project.description || '');
+                      const canExpandDescription = descriptionText.length > 170;
 
                       return (
                     <motion.div
@@ -204,21 +268,61 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                       className={`bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm group hover:shadow-md transition-shadow ${
                         projectGallery.length > 0 ? 'cursor-zoom-in' : ''
                       }`}
-                      onClick={() => openProjectGallery(projectGallery, 0)}
                     >
                       {(project.image_url || project.images?.length > 0) && (
-                        <div className="h-48 overflow-hidden bg-slate-100">
-                          <img
-                            src={project.image_url || project.images[0]?.image_url}
-                            alt={project.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
+                        <div
+                          className={`h-48 overflow-hidden bg-slate-100 ${
+                            projectGallery.length > 0 ? 'cursor-zoom-in' : ''
+                          }`}
+                          onClick={() => openProjectGallery(projectGallery, 0)}
+                        >
+                          <div
+                            className={`w-full h-full ${
+                              isQuarterTurn(primaryRotation) ? 'flex items-center justify-center bg-slate-100' : ''
+                            }`}
+                          >
+                            <img
+                              src={project.image_url || project.images[0]?.image_url}
+                              alt={project.title}
+                              className={`w-full h-full transition-transform duration-500 ${
+                                isQuarterTurn(primaryRotation)
+                                  ? 'object-contain group-hover:scale-[1.02]'
+                                  : 'object-cover group-hover:scale-105'
+                              }`}
+                              style={getImageTransformStyle(
+                                primaryFlipHorizontal,
+                                primaryFlipVertical,
+                                primaryRotation,
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
-                      <div className="p-6">
+                      <div className="p-6 border-t border-slate-200 bg-slate-50/60">
                         <h3 className="font-semibold text-slate-900 mb-2">{project.title}</h3>
                         {project.description && (
-                          <p className="text-sm text-slate-600 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: project.description }} suppressHydrationWarning />
+                          <>
+                            <p
+                              className={`text-sm text-slate-600 mb-2 ${isDescriptionExpanded ? '' : 'line-clamp-2'}`}
+                            >
+                              {descriptionText}
+                            </p>
+                            {canExpandDescription && (
+                              <button
+                                type="button"
+                                className="mb-4 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedDescriptions((prev) => ({
+                                    ...prev,
+                                    [project.id]: !isDescriptionExpanded,
+                                  }));
+                                }}
+                              >
+                                {isDescriptionExpanded ? 'Show less' : 'Show more'}
+                              </button>
+                            )}
+                          </>
                         )}
                         {project.technologies?.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-4">
@@ -321,9 +425,14 @@ export default function ProfessionalTemplate({ profile, username }: Professional
           )}
 
           <img
-            src={galleryImages[currentImageIndex]}
+            src={galleryImages[currentImageIndex]?.url}
             alt="Project screenshot"
             className="max-w-full max-h-[85vh] object-contain rounded-xl"
+            style={getImageTransformStyle(
+              galleryImages[currentImageIndex]?.flip_horizontal,
+              galleryImages[currentImageIndex]?.flip_vertical,
+              galleryImages[currentImageIndex]?.rotation_degrees,
+            )}
             onClick={(e) => e.stopPropagation()}
           />
 

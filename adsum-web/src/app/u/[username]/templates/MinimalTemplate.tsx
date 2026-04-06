@@ -11,6 +11,9 @@ interface MinimalTemplateProps {
 }
 
 export default function MinimalTemplate({ profile, username }: MinimalTemplateProps) {
+  const stripHtml = (html: string) =>
+    html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -30,7 +33,7 @@ export default function MinimalTemplate({ profile, username }: MinimalTemplatePr
           </h1>
           {profile.bio && (
             <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
-              {profile.bio.replace(/<[^>]*>/g, '')}
+              {stripHtml(profile.bio)}
             </p>
           )}
           
@@ -78,7 +81,7 @@ export default function MinimalTemplate({ profile, username }: MinimalTemplatePr
                   <p className="text-slate-600 mb-2">{exp.company}</p>
                   {exp.description && (
                     <p className="text-sm text-slate-500 leading-relaxed">
-                      {exp.description.replace(/<[^>]*>/g, '')}
+                      {stripHtml(exp.description)}
                     </p>
                   )}
                 </motion.div>
@@ -119,7 +122,7 @@ export default function MinimalTemplate({ profile, username }: MinimalTemplatePr
                   </div>
                   {project.description && (
                     <p className="text-sm text-slate-500 leading-relaxed mb-3">
-                      {project.description.replace(/<[^>]*>/g, '')}
+                      {stripHtml(project.description)}
                     </p>
                   )}
                   {project.technologies?.length > 0 && (

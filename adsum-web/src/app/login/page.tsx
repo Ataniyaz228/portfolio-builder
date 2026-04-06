@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import AdsumLogo from '@/components/AdsumLogo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -30,7 +31,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center items-center p-4 bg-background">
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-xl font-bold tracking-tighter hover:opacity-80 transition-opacity">
         <div className="w-8 h-8 rounded-xl bg-sidebar flex items-center justify-center text-white">
-          <Sparkles className="w-4 h-4" />
+          <AdsumLogo className="w-4 h-4" />
         </div>
         Adsum.
       </Link>
