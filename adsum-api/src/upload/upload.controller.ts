@@ -7,25 +7,25 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { v4 as uuidv4 } from 'uuid';
-import * as path from 'path';
+import { memoryStorage } from 'multer';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('upload')
 export class UploadController {
+  constructor() {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const extension = path.extname(file.originalname);
-          const filename = `${uuidv4()}${extension}`;
-          cb(null, filename);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
       },
@@ -37,18 +37,33 @@ export class UploadController {
       },
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is not uploaded');
     }
-    
-    // In a real production app you would use a cloud bucket.
-    // Here we return the local URL relative to the server host.
-    const fileUrl = `${process.env.BACKEND_URL || 'http://localhost:3001'}/uploads/${file.filename}`;
+
+    const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'adsum',
+          resource_type: 'image',
+        },
+        (error, result) => {
+          if (error || !result) {
+            reject(error || new Error('Cloudinary upload failed'));
+            return;
+          }
+
+          resolve(result);
+        },
+      );
+
+      stream.end(file.buffer);
+    });
     
     return {
-      url: fileUrl,
-      filename: file.filename,
+      url: uploadResult.secure_url,
+      filename: uploadResult.public_id,
       size: file.size,
       mimetype: file.mimetype,
     };
