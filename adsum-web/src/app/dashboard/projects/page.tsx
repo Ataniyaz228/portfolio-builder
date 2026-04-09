@@ -108,11 +108,15 @@ export default function ProjectsPage() {
     try {
       if (editingProject) {
         await api.patch(`/projects/${editingProject.id}`, formData);
+        setShowModal(false);
       } else {
-        await api.post('/projects', { ...formData, order_index: projects.length });
+        const { data: createdProject } = await api.post('/projects', {
+          ...formData,
+          order_index: projects.length,
+        });
+        setEditingProject(createdProject);
       }
-      setShowModal(false);
-      fetchProjects();
+      await fetchProjects();
     } catch (err) { console.error(err); }
     finally { setSaving(false); }
   };
@@ -477,6 +481,12 @@ export default function ProjectsPage() {
                       void fetchProjects();
                     }}
                   />
+                )}
+
+                {!activeEditingProject && (
+                  <p className="text-xs text-muted">
+                    Additional screenshots (up to 5) become available right after you create the project.
+                  </p>
                 )}
 
                 <button type="submit" disabled={saving}

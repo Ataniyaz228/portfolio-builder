@@ -66,16 +66,29 @@ export default function ProfessionalTemplate({ profile, username }: Professional
   };
 
   const getDescriptionText = (html = '') => {
-    const withoutTags = html.replace(/<[^>]*>/g, ' ');
+    const withLineBreaks = html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|li|h[1-6])>/gi, '\n');
+    const withoutTags = withLineBreaks.replace(/<[^>]*>/g, ' ');
 
     if (typeof window === 'undefined') {
-      return withoutTags.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+      return withoutTags
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\r/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
     }
 
     const textarea = document.createElement('textarea');
     textarea.innerHTML = withoutTags;
 
-    return textarea.value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    return textarea.value
+      .replace(/\u00a0/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
 
   return (
@@ -138,7 +151,9 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                 {profile.full_name || profile.username}
               </h1>
               {profile.bio && (
-                <p className="text-slate-600 leading-relaxed max-w-2xl mb-4" dangerouslySetInnerHTML={{ __html: profile.bio }} suppressHydrationWarning />
+                <p className="text-slate-600 leading-relaxed max-w-2xl mb-4 whitespace-pre-line">
+                  {getDescriptionText(profile.bio)}
+                </p>
               )}
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
@@ -208,7 +223,9 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                       </div>
                       <p className="text-slate-600 font-medium mb-2">{exp.company}</p>
                       {exp.description && (
-                        <p className="text-sm text-slate-500 leading-relaxed" dangerouslySetInnerHTML={{ __html: exp.description }} suppressHydrationWarning />
+                        <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-line">
+                          {getDescriptionText(exp.description)}
+                        </p>
                       )}
                     </motion.div>
                   ))}
