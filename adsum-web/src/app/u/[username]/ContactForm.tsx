@@ -195,10 +195,16 @@ export default function ContactForm({ username }: { username: string }) {
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-white/70 ml-1">Message *</label>
+        <div className="flex justify-between items-center ml-1">
+          <label className="text-sm font-medium text-white/70">Message *</label>
+          <span className={`text-xs transition-colors duration-200 ${formData.message.length > 900 ? 'text-amber-400 font-semibold' : 'text-white/40'}`}>
+            {formData.message.length} / 1000
+          </span>
+        </div>
         <textarea
           rows={4}
           required
+          maxLength={1000}
           disabled={sending}
           className={`${inputClass} resize-none ${touched.message && validationErrors.message ? 'border-red-500/50 focus:ring-red-500/30' : ''} disabled:opacity-55`}
           placeholder="Hi! I'd love to connect..."

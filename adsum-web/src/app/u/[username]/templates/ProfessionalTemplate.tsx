@@ -16,6 +16,7 @@ import Link from 'next/link';
 import ContactForm from '../ContactForm';
 import AnimatedSection from '@/components/AnimatedSection';
 import LazyImage from '@/components/LazyImage';
+import { SpotlightCard } from '@/components/SpotlightCard';
 
 interface ProfessionalTemplateProps {
   profile: any;
@@ -215,9 +216,12 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                       key={exp.id}
                       direction="up"
                       delay={i * 0.1}
-                      className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm"
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <SpotlightCard
+                        spotlightColor="rgba(59, 130, 246, 0.06)"
+                        className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm text-slate-700 hover:border-slate-300 transition-all"
+                      >
+                        <div className="flex items-start justify-between mb-2">
                         <h3 className="font-semibold text-slate-900">{exp.role}</h3>
                         <span className="text-xs text-slate-500 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -230,6 +234,7 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                           {getDescriptionText(exp.description)}
                         </p>
                       )}
+                      </SpotlightCard>
                     </AnimatedSection>
                   ))}
                 </div>
@@ -284,11 +289,14 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                       key={project.id}
                       direction="up"
                       delay={i * 0.1}
-                      className={`bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm group hover:shadow-md transition-shadow ${
-                        projectGallery.length > 0 ? 'cursor-zoom-in' : ''
-                      }`}
                     >
-                      {(project.image_url || project.images?.length > 0) && (
+                      <SpotlightCard
+                        spotlightColor="rgba(59, 130, 246, 0.06)"
+                        className={`bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm group hover:border-slate-300 hover:shadow-md transition-all ${
+                          projectGallery.length > 0 ? 'cursor-zoom-in' : ''
+                        }`}
+                      >
+                        {(project.image_url || project.images?.length > 0) && (
                         <div
                           className={`h-48 overflow-hidden bg-slate-100 ${
                             projectGallery.length > 0 ? 'cursor-zoom-in' : ''
@@ -375,6 +383,7 @@ export default function ProfessionalTemplate({ profile, username }: Professional
                           )}
                         </div>
                       </div>
+                      </SpotlightCard>
                     </AnimatedSection>
                       );
                     })()
@@ -417,7 +426,7 @@ export default function ProfessionalTemplate({ profile, username }: Professional
 
       {galleryImages.length > 0 && (
         <div
-          className="fixed inset-0 z-50 bg-slate-955/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={closeProjectGallery}
         >
           <button
