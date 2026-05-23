@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ExternalLink, Mail, Star, Briefcase, Code2, Quote, ArrowUpRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AdsumLogo from '@/components/AdsumLogo';
 import Link from 'next/link';
 import ContactForm from '../ContactForm';
 import { LiquidButton } from '@/components/ui/liquid-glass-button';
+import AnimatedSection from '@/components/AnimatedSection';
+import LazyImage from '@/components/LazyImage';
 
 interface CreativeTemplateProps {
   profile: any;
@@ -33,6 +35,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+  const shouldReduceMotion = useReducedMotion();
   
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -81,7 +84,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-slate-955 text-white overflow-x-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
@@ -90,16 +93,14 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
 
       {/* Hero */}
       <header className="relative min-h-[88vh] flex items-center justify-center px-6 pt-20 pb-24">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+        <AnimatedSection
+          direction="fade"
+          duration={0.8}
           className="text-center max-w-4xl w-full"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+          <AnimatedSection
+            direction="up"
+            delay={0.2}
             className="relative w-32 h-32 mx-auto mb-10"
           >
             <div
@@ -107,53 +108,56 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
               style={{ backgroundColor: `${theme.primary}33` }}
             />
             {profile.avatar_url ? (
-              <img
+              <LazyImage
                 src={profile.avatar_url}
                 alt={profile.full_name}
-                className="relative w-32 h-32 rounded-full object-cover border-4 border-white/15 shadow-2xl"
+                fallbackType="avatar"
+                priority={true}
+                className="relative w-32 h-32 rounded-full border-4 border-white/15 shadow-2xl"
+                imgClassName="w-full h-full object-cover rounded-full"
               />
             ) : (
               <div className="relative w-32 h-32 rounded-full bg-white/10 border-4 border-white/15 flex items-center justify-center text-4xl font-bold text-white/70">
                 {(profile.full_name || profile.username)?.charAt(0)}
               </div>
             )}
-          </motion.div>
+          </AnimatedSection>
           
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+          <AnimatedSection
+            direction="up"
+            delay={0.3}
             className="flex items-center justify-center gap-2 mb-4"
           >
             <AdsumLogo className="w-5 h-5" style={{ color: theme.primary }} />
             <span className="text-sm font-medium text-white/60 uppercase tracking-widest">Portfolio</span>
-          </motion.div>
+          </AnimatedSection>
           
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-6xl md:text-8xl font-bold tracking-tight leading-[1.2] pb-2 mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent"
+          <AnimatedSection
+            direction="up"
+            delay={0.4}
           >
-            {profile.full_name || profile.username}
-          </motion.h1>
+            <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-[1.2] pb-2 mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+              {profile.full_name || profile.username}
+            </h1>
+          </AnimatedSection>
           
           {profile.bio && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+            <AnimatedSection
+              direction="up"
+              delay={0.5}
               className="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: profile.bio }}
-              suppressHydrationWarning
-            />
+            >
+              <div
+                dangerouslySetInnerHTML={{ __html: profile.bio }}
+                suppressHydrationWarning
+              />
+            </AnimatedSection>
           )}
           
           {/* Social Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+          <AnimatedSection
+            direction="up"
+            delay={0.6}
             className="flex flex-wrap items-center justify-center gap-4 mt-10"
           >
             {profile.github_url && (
@@ -171,43 +175,43 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                 Email <Mail className="w-4 h-4" />
               </a>
             )}
-          </motion.div>
-        </motion.div>
+          </AnimatedSection>
+        </AnimatedSection>
         
         {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2"
-        >
+        {!shouldReduceMotion && (
           <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="w-6 h-10 rounded-full border-2 border-white/20 bg-white/[0.03] flex items-start justify-center p-2 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2"
           >
             <motion.div
-              animate={{ y: [0, 14, 0], opacity: [0.9, 0.3, 0.9] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-              className="w-1 h-2 bg-white/60 rounded-full"
-            />
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="w-6 h-10 rounded-full border-2 border-white/20 bg-white/[0.03] flex items-start justify-center p-2 overflow-hidden"
+            >
+              <motion.div
+                animate={{ y: [0, 14, 0], opacity: [0.9, 0.3, 0.9] }}
+                transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+                className="w-1 h-2 bg-white/60 rounded-full"
+              />
+            </motion.div>
           </motion.div>
-        </motion.div>
+        )}
       </header>
 
       <main className="relative max-w-6xl mx-auto px-6 pb-20 space-y-32">
         {/* Projects */}
         {profile.projects?.length > 0 && (
           <section>
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <AnimatedSection
+              direction="right"
               className="mb-12"
             >
               <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Selected Work</span>
               <h2 className="text-4xl md:text-5xl font-bold mt-2">Projects</h2>
-            </motion.div>
+            </AnimatedSection>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {profile.projects.map((project: any, i: number) => (
@@ -246,12 +250,10 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                     : project.images?.[0]?.rotation_degrees;
 
                   return (
-                <motion.div
+                <AnimatedSection
                   key={project.id}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  direction="up"
+                  delay={i * 0.1}
                   className="group relative"
                 >
                   {(() => {
@@ -277,22 +279,22 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                             isQuarterTurn(primaryRotation) ? 'flex items-center justify-center bg-white/5' : ''
                           }`}
                         >
-                          <img
+                          <LazyImage
                             src={project.image_url || project.images[0]?.image_url}
                             alt={project.title}
-                            className={`w-full h-full transition-transform duration-700 ${
+                            fallbackType="project"
+                            flipHorizontal={primaryFlipHorizontal}
+                            flipVertical={primaryFlipVertical}
+                            rotationDegrees={primaryRotation}
+                            className="w-full h-full"
+                            imgClassName={`w-full h-full transition-transform duration-700 ${
                               isQuarterTurn(primaryRotation)
                                 ? 'object-contain group-hover:scale-[1.02]'
                                 : 'object-cover group-hover:scale-110'
                             }`}
-                            style={getImageTransformStyle(
-                              primaryFlipHorizontal,
-                              primaryFlipVertical,
-                              primaryRotation,
-                            )}
                           />
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-955 via-slate-955/50 to-transparent" />
                         
                         {/* Thumbnail Gallery */}
                         {project.images?.length > 1 && (
@@ -308,16 +310,16 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                                   openProjectGallery(projectGallery, targetIndex === -1 ? 0 : targetIndex);
                                 }}
                               >
-                                <div
+                                <LazyImage
+                                  src={img.image_url}
+                                  alt=""
+                                  fallbackType="project"
+                                  flipHorizontal={img.flip_horizontal}
+                                  flipVertical={img.flip_vertical}
+                                  rotationDegrees={img.rotation_degrees}
                                   className="w-full h-full"
-                                  style={getImageTransformStyle(
-                                    img.flip_horizontal,
-                                    img.flip_vertical,
-                                    img.rotation_degrees,
-                                  )}
-                                >
-                                  <img src={img.image_url} alt="" className="w-full h-full object-cover" />
-                                </div>
+                                  imgClassName="w-full h-full object-cover"
+                                />
                               </button>
                             ))}
                             {project.images.length > 4 && (
@@ -329,7 +331,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                         )}
                       </div>
                     )}
-                    <div className="p-6 border-t border-white/10 bg-slate-950/65">
+                    <div className="p-6 border-t border-white/10 bg-slate-955/65">
                       <h3 className="text-2xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
                         {project.title}
                       </h3>
@@ -392,7 +394,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                   </div>
                     );
                   })()}
-                </motion.div>
+                </AnimatedSection>
                   );
                 })()
               ))}
@@ -403,24 +405,20 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
         {/* Experience */}
         {profile.experiences?.length > 0 && (
           <section>
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <AnimatedSection
+              direction="right"
               className="mb-12"
             >
               <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Career</span>
               <h2 className="text-4xl md:text-5xl font-bold mt-2">Experience</h2>
-            </motion.div>
+            </AnimatedSection>
             
             <div className="space-y-8">
               {profile.experiences.map((exp: any, i: number) => (
-                <motion.div
+                <AnimatedSection
                   key={exp.id}
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  direction="right"
+                  delay={i * 0.1}
                   className="flex gap-6 group"
                 >
                   <div className="flex flex-col items-center">
@@ -439,7 +437,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                       <p className="text-white/40 leading-relaxed" dangerouslySetInnerHTML={{ __html: exp.description }} suppressHydrationWarning />
                     )}
                   </div>
-                </motion.div>
+                </AnimatedSection>
               ))}
             </div>
           </section>
@@ -448,24 +446,20 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
         {/* Skills */}
         {profile.skills?.length > 0 && (
           <section>
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <AnimatedSection
+              direction="right"
               className="mb-12"
             >
               <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Expertise</span>
               <h2 className="text-4xl md:text-5xl font-bold mt-2">Skills</h2>
-            </motion.div>
+            </AnimatedSection>
             
             <div className="flex flex-wrap gap-3">
               {profile.skills.map((skill: any, i: number) => (
-                <motion.div
+                <AnimatedSection
                   key={skill.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
+                  direction="fade"
+                  delay={i * 0.05}
                   className={`px-6 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all ${skill.proficiency >= 80 ? 'border-l-4' : ''}`}
                   style={skill.proficiency >= 80 ? { borderLeftColor: theme.primary } : {}}
                 >
@@ -473,7 +467,7 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
                   {skill.proficiency && (
                     <span className="ml-2 text-sm text-white/40">{skill.proficiency}%</span>
                   )}
-                </motion.div>
+                </AnimatedSection>
               ))}
             </div>
           </section>
@@ -481,10 +475,8 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
 
         {/* Contact */}
         <section className="text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <AnimatedSection
+            direction="up"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Let&apos;s Work Together</h2>
             <p className="text-white/60 mb-8 max-w-md mx-auto">
@@ -493,13 +485,13 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             <div className="max-w-md mx-auto">
               <ContactForm username={username} />
             </div>
-          </motion.div>
+          </AnimatedSection>
         </section>
       </main>
 
       {galleryImages.length > 0 && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-955/95 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={closeProjectGallery}
         >
           <button
@@ -525,15 +517,15 @@ export default function CreativeTemplate({ profile, username }: CreativeTemplate
             </button>
           )}
 
-          <img
+          <LazyImage
             src={galleryImages[currentImageIndex]?.url}
             alt="Project screenshot"
-            className="max-w-full max-h-[85vh] object-contain rounded-xl"
-            style={getImageTransformStyle(
-              galleryImages[currentImageIndex]?.flip_horizontal,
-              galleryImages[currentImageIndex]?.flip_vertical,
-              galleryImages[currentImageIndex]?.rotation_degrees,
-            )}
+            className="max-w-full max-h-[85vh]"
+            imgClassName="max-w-full max-h-[85vh] object-contain rounded-xl"
+            fallbackType="project"
+            flipHorizontal={galleryImages[currentImageIndex]?.flip_horizontal}
+            flipVertical={galleryImages[currentImageIndex]?.flip_vertical}
+            rotationDegrees={galleryImages[currentImageIndex]?.rotation_degrees}
             onClick={(e) => e.stopPropagation()}
           />
 
